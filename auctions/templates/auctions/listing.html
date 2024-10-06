@@ -1,0 +1,92 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>Listing: {{ listing.title }}</h2>
+    <div>
+
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <img src="{{ listing.image_url }}" alt="{{ listing.title }}" style="width:100%; max-width:500px;">
+
+        <h3>{{ listing.title }}</h3>
+        <p>{{ listing.description }}</p>
+
+        {% if user.is_authenticated %}
+        <form method="POST" style="margin-top: 10px;">
+            {% csrf_token %}
+            {% if user_watchlist %}
+                <label style="background-color:yellow;border-radius: 5px;">Watchlist</label>
+            {% else %}
+                <button type="submit" name="wt" class="btn-warning">Add to Watchlist</button>
+            {% endif %}
+        </form>
+        {% endif %}
+        <h4>${{ listing.current_price|default:listing.starting_bid }}</h4>
+        <p>{{ listing.bids.count }} bid(s) so far.</p>
+        {% if user.is_authenticated and listing.current_bidder == user %}
+            <p><strong>Your bid is the current bid.</strong></p>
+        {% endif %}
+
+
+        {% if listing.is_active %}
+            {% if is_creator %}
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" name="close_auction" class="btn btn-danger">Close Auction</button>
+                </form>
+            {% endif %}
+            {% else %}
+                {% if user_is_winner %}
+                    <p class="text-success">Congratulations! You have won the auction.</p>
+                {% else %}
+                    <p class="text-muted">This auction is closed.</p>
+                {% endif %}
+        {% endif %}
+
+        {% if user.is_authenticated and listing.is_active %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="number" class="form-control" name="bid_amount" placeholder="Enter bid amount">
+            </div>
+            <button type="submit" name="bid_action" class="btn btn-primary">Place Bid</button>
+        </form>
+
+        {% endif %}
+
+        <h3>Comments:</h3>
+    <div class="comments">
+        {% for comment in comments %}
+            <p><strong>{{ comment.commentor.username}}:</strong> {{ comment.comment_text }} ({{ comment.timestamp|date:"F j, Y, g:i a" }})</p>
+        {% empty %}
+            <p>No comments yet.</p>
+        {% endfor %}
+    </div>
+
+    {% if user.is_authenticated %}
+        <form method="POST">
+            {% csrf_token %}
+            <textarea name="comment_text" placeholder="Add a comment..." required></textarea>
+            <button type="submit" name="comment" class="btn btn-primary">Post Comment</button>
+        </form>
+    {% endif %}
+
+
+
+        <h5>Details</h5>
+    <ul>
+        <li>Listed by: {{ listing.creator.username }}</li>
+        <li>Category: {{ listing.category|default:"No Category Listed" }}</li>
+    </ul>
+
+   </div>
+
+
+{% endblock %}
